@@ -77,7 +77,8 @@ fun main() = application {
     Koin(appDeclaration = { modules(di.oppModule) }){
         Window(
             onCloseRequest = ::exitApplication,
-            state = WindowState(width = 1024.dp, position = WindowPosition(Alignment.Center))
+            state = WindowState(width = 1024.dp, position = WindowPosition(Alignment.Center)),
+            title = "Compose Desktop"
         ) {
             val uiState = remember {
                 mutableStateOf<MainScreen>(MainScreen.LoginScreen)
