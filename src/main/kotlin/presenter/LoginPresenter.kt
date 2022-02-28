@@ -5,7 +5,6 @@ import data.request.LoginRequest
 import data.response.LoginErrorResponse
 import io.ktor.client.call.*
 import io.ktor.client.features.*
-import io.ktor.client.statement.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
