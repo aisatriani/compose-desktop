@@ -17,6 +17,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import data.request.LoginRequest
+import dev.burnoo.cokoin.get
+import presenter.LoginPresenter
 
 @Composable
 @Preview
@@ -29,12 +32,18 @@ fun PreviewLoginScreen() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LoginScreen(onLogin: (Boolean) -> Unit) {
+    val loginPresenter = get<LoginPresenter>()
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
-    val stateLogin = remember { mutableStateOf(true) }
     val interactionSource = remember { MutableInteractionSource() }
     val focusRequester = FocusRequester()
-    MaterialTheme(colors = darkColors()){
+    val stateLogin = loginPresenter.loginState.collectAsState(LoginPresenter.LoginState.Initialize)
+
+    if(stateLogin.value is LoginPresenter.LoginState.LoginSuccess){
+        onLogin(true)
+    }
+
+    MaterialTheme(colors = darkColors()) {
         Surface {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.align(Alignment.Center).width(300.dp)) {
@@ -45,7 +54,7 @@ fun LoginScreen(onLogin: (Boolean) -> Unit) {
                         fontFamily = FontFamily.Monospace
                     )
                     Spacer(modifier = Modifier.height(20.dp))
-                    if (!stateLogin.value) {
+                    if (stateLogin.value is LoginPresenter.LoginState.LoginFailed) {
                         Text(
                             "Invalid username or password",
                             color = Color.Red,
@@ -57,7 +66,7 @@ fun LoginScreen(onLogin: (Boolean) -> Unit) {
                         value = username.value,
                         onValueChange = {
                             username.value = it
-                            stateLogin.value = true
+                            loginPresenter.setInitilize()
                         },
                         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester = focusRequester),
                         placeholder = { Text("username") },
@@ -70,12 +79,13 @@ fun LoginScreen(onLogin: (Boolean) -> Unit) {
                         value = password.value,
                         onValueChange = {
                             password.value = it
-                            stateLogin.value = true
+                            loginPresenter.setInitilize()
                         },
                         modifier = Modifier.fillMaxWidth().onPreviewKeyEvent {
                             if (it.key == Key.Enter && it.type == KeyEventType.KeyUp) {
                                 println("enter click")
-                                loginAction(username,password, onLogin, stateLogin)
+//                                loginAction(username, password, onLogin, stateLogin)
+                                loginPresenter.login(LoginRequest(username.value,password.value))
                                 true
                             } else
                                 false
@@ -85,8 +95,14 @@ fun LoginScreen(onLogin: (Boolean) -> Unit) {
                         singleLine = true,
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    Button(onClick = {loginAction(username, password, onLogin, stateLogin)}, modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
-                        Text("LOGIN")
+                    Button(onClick = {
+                         loginPresenter.login(LoginRequest(username.value,password.value))
+                    }, modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
+                        if(stateLogin.value is LoginPresenter.LoginState.Loading){
+                            CircularProgressIndicator(modifier = Modifier.size(21.dp), color = Color.Red)
+                        }else{
+                            Text("LOGIN")
+                        }
                     }
                 }
             }
@@ -95,7 +111,7 @@ fun LoginScreen(onLogin: (Boolean) -> Unit) {
 
     }
 
-    LaunchedEffect(true){
+    LaunchedEffect(true) {
         focusRequester.requestFocus()
     }
 }
